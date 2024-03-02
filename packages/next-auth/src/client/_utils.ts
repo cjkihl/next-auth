@@ -50,9 +50,16 @@ export async function fetchData<T = any>(
     }
 
     const res = await fetch(url, options)
-    const data = await res.json()
-    if (!res.ok) throw data
-    return Object.keys(data).length > 0 ? data : null // Return null if data empty
+    const text = await res.text()
+    try {
+      // If the response is JSON, return that
+      const data = JSON.parse(text)
+      if (!res.ok) throw data
+      return Object.keys(data).length > 0 ? data : null // Return null if data empty
+    } catch (error) {
+      error.message = `Could not parse JSON from response: ${text}. ${error.message}`
+      throw error
+    }
   } catch (error) {
     logger.error("CLIENT_FETCH_ERROR", { error: error as Error, url })
     return null
